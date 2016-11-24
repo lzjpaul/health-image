@@ -16,7 +16,7 @@ def find_label(path):
         gender = 0
     else:
         gender = 1
-    with open('./records.csv', 'rb') as r:
+    with open('../data/records.csv', 'rb') as r:
         label = -1
         iid = ''
         RECORDS = csv.reader(r)

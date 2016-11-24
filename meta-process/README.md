@@ -1,5 +1,8 @@
 # Preprocessing scripts to generate meta data for the healthcare images
 ## run
+These scripts suppose your data are put at `path_to_repo/data/raw` and the
+records.csv is put at `path_to_repo/data`.
+
 First `python preprocess.py` then `python combine.py`
 
 *PLEASE USE meta_final.csv and meta_full_final.csv AS THE INPUT FOR THE FOLLOW UP WORK!*

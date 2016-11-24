@@ -7,8 +7,8 @@ import glob
 import dicom
 
 
-IMAGEMALE = '../IMAGE/DX_male/'
-IMAGEFEMALE = '../IMAGE/DX_female/'
+IMAGEMALE = '../data/raw/DX_male/'
+IMAGEFEMALE = '../data/raw/DX_female/'
 
 
 LOG = open('preprocess.log', 'w')
@@ -74,7 +74,7 @@ def find_record(name):
 
     images = os.listdir(prefix)
     if len(images) == 0:
-        LOG.write('Image folder is empty: ' + prefix[3:] + '\n')
+        LOG.write('Image folder is empty: ' + prefix[12:] + '\n')
         return ''
 
     idx = 0
@@ -82,8 +82,8 @@ def find_record(name):
         idx = find_postero(prefix, images)
 
     if idx == -1:
-        LOG.write('Postero image not found: ' + prefix[3:] + '\n')
-        NOPA.write(prefix[3:] + '\n')
+        LOG.write('Postero image not found: ' + prefix[12:] + '\n')
+        NOPA.write(prefix[12:] + '\n')
         global num_nopa
         num_nopa += 1
         return ''
@@ -145,7 +145,7 @@ def meta_data(iline):
         else:
             gender = 0
 
-        meta.append(path[3:])
+        meta.append(path[12:])
         meta.append(label)
         meta.append(iid)
         meta.append(gender)
@@ -154,7 +154,7 @@ def meta_data(iline):
 
 
 if __name__ == '__main__':
-    with open('./records.csv', 'rb') as csvinput, \
+    with open('../data/records.csv', 'rb') as csvinput, \
             open('./meta.csv', 'w') as csvoutput1,  \
             open('./meta_full.csv', 'w') as csvoutput2:
         RECORDS = csv.reader(csvinput)
