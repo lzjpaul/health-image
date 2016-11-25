@@ -3,6 +3,7 @@
 
 import csv
 import os
+import random
 
 
 LOG = open('combine.log', 'w')
@@ -109,12 +110,30 @@ def remove_duplicate(meta_path):
     return meta
 
 
+def split_write(l, ratio, w1, w2):
+    random.shuffle(l)
+    spoint = int(len(l) * ratio)
+    for i in range(len(l)):
+        if i < spoint:
+            w1.writerow(l[i])
+        else:
+            w2.writerow(l[i])
+    LOG.write('number of training images: %d\n' %spoint)
+    LOG.write('number of test images: %d\n' %(len(l)-spoint))
+    return spoint
+
+
 if __name__ == '__main__':
     with open('./meta_full_final.csv', 'w') as o1, \
-            open('./meta_final.csv', 'w') as o2:
+            open('./meta_final.csv', 'w') as o2, \
+            open('./meta_train.csv', 'w') as o3, \
+            open('./meta_test.csv', 'w') as o4:
+        meta = []
         header = ['path', 'label', 'IID', 'gender']
         out1 = csv.writer(o1, delimiter = ' ')
         out2 = csv.writer(o2, delimiter = ' ')
+        train = csv.writer(o3, delimiter = ' ')
+        test = csv.writer(o4, delimiter = ' ')
         out1.writerow(header)
         out2.writerow(header[:2])
         meta_dict = remove_duplicate('./meta_full.csv')
@@ -125,7 +144,7 @@ if __name__ == '__main__':
         for key in sorted(meta_dict.keys()):
             out1.writerow(meta_dict[key])
             out2.writerow(meta_dict[key][:2])
-            #print meta_dict[key][-1]
+            meta.append(meta_dict[key][:2])
             if int(meta_dict[key][1]) == 1:
                 num_pos += 1
             else:
@@ -160,5 +179,8 @@ if __name__ == '__main__':
             LOG.write("number of positive samples: %d\n" %num_pos)
             LOG.write("number of negative samples: %d\n" %num_neg)
             LOG.write("===================================================\n")
+        s = split_write(meta, 0.9, train, test)
+        print ('number of training images: %d' %s)
+        print ('number of test images: %d' %(len(meta)-s))
 
     LOG.close()

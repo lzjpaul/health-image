@@ -31,3 +31,5 @@ number of female samples: 797
 number of positive samples: 496
 number of negative samples: 1095
 ===================================================
+number of training images: 1431
+number of test images: 160
