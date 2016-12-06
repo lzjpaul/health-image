@@ -173,6 +173,8 @@ if __name__ == '__main__':
         width, height = im.size
         #print "origin im.size: ", im.size
         im = im.resize((resize_size,resize_size), PIL.Image.NEAREST)
+        ary = np.asarray(im, np.uint8)
+        '''
         print 'resized im norm: ', np.linalg.norm(np.uint8(im)) / im.size
         pixels = list(im.getdata())
         width, height = im.size
@@ -181,26 +183,29 @@ if __name__ == '__main__':
         #print "pixels asarray shape: ", np.asarray(pixels).shape
         pixels_array = np.asarray(pixels)
         print 'pixels_array norm: ', np.linalg.norm(pixels_array) / pixels_array.size
-        #print "i: ", i
-        #print "lstDirs[i]: ", lstDirs[i]
+        '''
+        print "i: ", i
+        print "lstDirs[i]: ", lstDirs[i]
         transform_dir = lstDirs[i].replace("raw", "resizejpeg" + str(resize_size))
         #print "transform_dir: ", transform_dir
         if not os.path.exists(transform_dir):
             os.makedirs(transform_dir)
-        if pixels_array.dtype == np.int64:
-            im.save(transform_dir + "/" + lstFileName[i][: -4] + ".jpeg", "JPEG")
-            print "save dir: ", transform_dir + "/" + lstFileName[i][: -4] + ".jpeg"
-        else:
-            print "not int64"
+        #if pixels_array.dtype == np.int64:
+        im.save(transform_dir + "/" + lstFileName[i][: -4] + ".jpeg", "JPEG")
+        print "save dir: ", transform_dir + "/" + lstFileName[i][: -4] + ".jpeg"
+        #else:
+        #    print "not int64"
         # im.save(transform_dir + "/" + lstFileName[i][: -4] + ".png")
         # print "save dir: ", transform_dir + "/" + lstFileName[i][: -4] + ".png"
         if lstFilesDCM[i] in imglist:
             PA_number = PA_number + 1
-            mean_vector = mean_vector + pixels_array
+            mean_vector = mean_vector + ary
             #print "PA image: ", lstFilesDCM[i]
 
     #print "PA_number: ", PA_number
     mean_vector = mean_vector / float(PA_number)
+    #np.savetxt(args.rawdatadir.replace("raw", "resize" + str(resize_size)) + "/mean.csv", mean_vector, "%5f", ",")
     np.savetxt(args.rawdatadir.replace("raw", "resizejpeg" + str(resize_size)) + "/mean.csv", mean_vector, "%5f", ",")
+    #print "save dir: ", args.rawdatadir.replace("raw", "resize" + str(resize_size)) + "/mean.csv"
     #print "save dir: ", args.rawdatadir.replace("raw", "resize" + str(resize_size)) + "/mean.csv"
     f.close()
