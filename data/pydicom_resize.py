@@ -42,8 +42,8 @@ def get_LUT_value(data, window, level):
     if not have_numpy:
         raise ImportError("Numpy is not available. See http://numpy.scipy.org/"
                           " to download and install")
-    print "window: ", window
-    print "level: ", level
+    #print "window: ", window
+    #print "level: ", level
     return np.piecewise(data,
                         [data <= (level - 0.5 - (window - 1) / 2),
                          data > (level - 0.5 + (window - 1) / 2)],
@@ -51,7 +51,7 @@ def get_LUT_value(data, window, level):
                          (window - 1) + 0.5) * (255 - 0)])
 
 
-def get_PIL_image(dataset, im):
+def get_PIL_image(dataset):
     """Get Image object from Python Imaging Library(PIL)"""
     if not have_PIL:
         raise ImportError("Python Imaging Library is not available. "
@@ -61,14 +61,15 @@ def get_PIL_image(dataset, im):
         raise TypeError("Cannot show image -- DICOM dataset does not have "
                         "pixel data")
     # can only apply LUT if these window info exists
-    print 'WindowWidth' not in dataset
-    print 'WindowCenter' not in dataset
+    #print 'WindowWidth' not in dataset
+    #print 'WindowCenter' not in dataset
 
     if (hasattr(dataset, 'WindowWidth') and len(str(dataset.WindowWidth)) > 0) and \
             (hasattr(dataset, 'WindowCenter') and len(str(dataset.WindowCenter)) > 0):
-        print dataset.WindowWidth
-        print dataset.WindowCenter
-        print type(dataset.WindowWidth)
+        #print dataset.WindowWidth
+        #print dataset.WindowCenter
+        #print type(dataset.WindowWidth)
+        print 'pixel array norm: ', np.linalg.norm(dataset.pixel_array) / dataset.pixel_array.size
         if type(dataset.WindowWidth) is dicom.multival.MultiValue:
             image = get_LUT_value(dataset.pixel_array, int(dataset.WindowWidth[0]),
                               int(dataset.WindowCenter[0]))
@@ -77,10 +78,13 @@ def get_PIL_image(dataset, im):
                               int(dataset.WindowCenter))
         # Convert mode to L since LUT has only 256 values:
         #   http://www.pythonware.com/library/pil/handbook/image.htm
+        a = np.uint8(image)
+        print a[0:2,0:2]
+        print 'image norm: ', np.linalg.norm(a) / a.size
         im = PIL.Image.fromarray(np.uint8(image)).convert('L')
-        return 1
+        return (1, im)
     else:
-        return 0
+        return (0, PIL.Image.new('L', (1,1)))
 
 
 def show_PIL(dataset):
@@ -150,49 +154,53 @@ if __name__ == '__main__':
         # print "dict ./raw/ + img_path: ", "./raw/" + img_path
         # print "line_no: ", line_no
         line_no = line_no + 1
-    print "imglist: ", imglist
+    #print "imglist: ", imglist
 
     PA_number = 0
 
     f = open('lut.log', 'w')
     for i in range(len(lstFilesDCM)):
         ds = dicom.read_file(lstFilesDCM[i])
-        print "processing: ", lstFilesDCM[i]
-        im = PIL.Image.new('L', (ds.Columns, ds.Rows))
-        if get_PIL_image(ds, im) == 0:
+        #print "processing: ", lstFilesDCM[i]
+        #im = PIL.Image.new('L', (ds.Columns, ds.Rows))
+        success, im = get_PIL_image(ds)
+        if success == 0:
             f.write('Not LUT: ' + lstFilesDCM[i][6:] + '\n')
             continue
+        print 'im norm: ', np.linalg.norm(np.uint8(im)) / im.size
 
         #im = get_PIL_image(ds)
         width, height = im.size
-        print "origin im.size: ", im.size
+        #print "origin im.size: ", im.size
         im = im.resize((resize_size,resize_size), PIL.Image.NEAREST)
+        print 'resized im norm: ', np.linalg.norm(np.uint8(im)) / im.size
         pixels = list(im.getdata())
         width, height = im.size
-        print "im.size: ", im.size
+        #print "im.size: ", im.size
         pixels = [pixels[index * width:(index + 1) * width] for index in xrange(height)]
-        print "pixels asarray shape: ", np.asarray(pixels).shape
+        #print "pixels asarray shape: ", np.asarray(pixels).shape
         pixels_array = np.asarray(pixels)
-        print "i: ", i
-        print "lstDirs[i]: ", lstDirs[i]
+        print 'pixels_array norm: ', np.linalg.norm(pixels_array) / pixels_array.size
+        #print "i: ", i
+        #print "lstDirs[i]: ", lstDirs[i]
         transform_dir = lstDirs[i].replace("raw", "resize" + str(resize_size))
-        print "transform_dir: ", transform_dir
+        #print "transform_dir: ", transform_dir
         if not os.path.exists(transform_dir):
             os.makedirs(transform_dir)
         if pixels_array.dtype == np.int64:
             np.savetxt(transform_dir + "/" + lstFileName[i][: -4] + ".csv", pixels_array, "%d", ",")
             print "save dir: ", transform_dir + "/" + lstFileName[i][: -4] + ".csv"
-        else:
-            print "not int64"
+        #else:
+            #print "not int64"
         # im.save(transform_dir + "/" + lstFileName[i][: -4] + ".png")
         # print "save dir: ", transform_dir + "/" + lstFileName[i][: -4] + ".png"
         if lstFilesDCM[i] in imglist:
             PA_number = PA_number + 1
             mean_vector = mean_vector + pixels_array
-            print "PA image: ", lstFilesDCM[i]
+            #print "PA image: ", lstFilesDCM[i]
 
-    print "PA_number: ", PA_number
+    #print "PA_number: ", PA_number
     mean_vector = mean_vector / float(PA_number)
     np.savetxt(args.rawdatadir.replace("raw", "resize" + str(resize_size)) + "/mean.csv", mean_vector, "%5f", ",")
-    print "save dir: ", args.rawdatadir.replace("raw", "resize" + str(resize_size)) + "/mean.csv"
+    #print "save dir: ", args.rawdatadir.replace("raw", "resize" + str(resize_size)) + "/mean.csv"
     f.close()
